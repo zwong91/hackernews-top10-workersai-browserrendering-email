@@ -257,6 +257,17 @@ app.get('/', async (c) => {
                             white-space: pre-wrap;
                             display: ${aiContent ? 'block' : 'none'};
                         }
+                            footer {
+                            background: rgba(0, 0, 0, 0.5);
+                            color: #fff;
+                            text-align: center;
+                            padding: 15px;
+                            position: fixed;
+                            bottom: 0;
+                            left: 0;
+                            width: 100%;
+                            backdrop-filter: blur(5px);
+                        }
                     </style>
                 </head>
                 <body>
@@ -287,6 +298,9 @@ app.get('/', async (c) => {
                             </div>
                         ` : ''}
                     </div>
+                    <footer>
+                        Powered by <a href="https://developers.cloudflare.com/workers-ai/models/">Cloudflare Workers AI</a>, <a href="https://developers.cloudflare.com/browser-rendering/">Browser Rendering</a>, <a href="https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/">Emails</a> | GitHub -> <a href="https://github.com/elizabethsiegle/hackernews-top10-workersai-browserrendering-email">code👩🏻‍💻here</a>
+                    </footer>
                 </body>
             </html>
         `;
