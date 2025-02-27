@@ -85,21 +85,17 @@ const app = new Hono<{ Bindings: Env }>();
 app.get('/', serveStatic({ root: './assets' }));
 
 // Handle the analysis with GET
-app.get('/analyze', async (c) => {
-    const url = "https://news.ycombinator.com"; // Hacker News URL
+app.get('/', async (c) => {
+    const tone = c.req.query('tone');
+    const url = "https://news.ycombinator.com";
 
     try {
-        // Get or create a Durable Object instance
-        const id = c.env.BROWSERDO.idFromName("browser");
-        const browserObj = c.env.BROWSERDO.get(id);
-
-        // Initialize the browser
+        // Initialize browser and get stories
         const browserManager = new BrowserDo(c.env, { storage: null });
         const browser = await browserManager.initBrowser();
         const page = await browser.newPage();
         await page.goto(url);
 
-        // Scrape the top stories
         const topStories = await page.evaluate(() => {
             const stories: { title: string; link: string }[] = [];
             const storyElements = document.querySelectorAll('.athing');
@@ -114,12 +110,63 @@ app.get('/analyze', async (c) => {
                 }
             });
 
-            return stories.slice(0, 10); // Get the top 10 stories
+            return stories.slice(0, 10);
         });
 
         await page.close();
 
-        // Format the results into HTML
+        // Only generate AI analysis if a tone is selected
+        let aiContent = '';
+        if (tone) {
+            try {
+                const storiesForAnalysis = topStories
+                    .map((story: { title: string }, index: number) => `${index + 1}. ${story.title}`)
+                    .join('\n');
+
+                let systemPrompt;
+                if (tone === 'tedlasso') {
+                    systemPrompt = "You are Ted Lasso, the optimistic football coach. With your characteristic warmth, folksy wisdom, and endless optimism, analyze these Hacker News stories. Use Ted Lasso-style metaphors, reference biscuits, football (soccer), and keep it believe-ingly positive!";
+                } else if (tone === 'stephena') {
+                    systemPrompt = "You are Stephen A. Smith, the passionate sports commentator. With your signature dramatic flair and strong opinions, analyze these Hacker News stories. Use your catchphrases, dramatic pauses (marked with ...), and bold declarations. Stay BLASPHEMOUS!";
+                }
+
+                const analysisMessages = [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: "Analyze these top Hacker News stories and provide a brief, engaging summary:\n\n" + storiesForAnalysis }
+                ];
+
+                const analysisResponse = await c.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", 
+                    {
+                        messages: analysisMessages,
+                        max_tokens: 2048,
+                        temperature: 0.7,
+                    },
+                    {
+                        gateway: {
+                            id: "hn-browser-email",
+                            skipCache: false,
+                            cacheTtl: 3360,
+                        },
+                    }
+                );
+
+                aiContent = (analysisResponse?.text || 
+                           analysisResponse?.response || 
+                           analysisResponse?.content || 
+                           'Analysis failed to generate.')
+                           .toString()
+                           .replace(/&/g, '&amp;')
+                           .replace(/</g, '&lt;')
+                           .replace(/>/g, '&gt;')
+                           .replace(/"/g, '&quot;')
+                           .replace(/'/g, '&#039;');
+
+            } catch (aiError) {
+                console.error('AI Analysis Error:', aiError);
+                aiContent = 'Failed to generate AI analysis.';
+            }
+        }
+
         const resultHtml = `
             <!DOCTYPE html>
             <html>
@@ -144,84 +191,109 @@ app.get('/analyze', async (c) => {
                             padding: 20px;
                         }
                         
-                        h1 {
-                            text-align: center;
-                            color: #00ff95;
-                            font-size: 2.5em;
-                            margin: 20px 0;
-                            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-                        }
-                        
                         .container {
-                            flex: 1;
                             max-width: 800px;
                             margin: 0 auto;
-                        }
-                        
-                        ul {
-                            list-style-type: none;
-                            padding: 0;
-                        }
-                        
-                        li {
-                            background: rgba(255, 255, 255, 0.1);
-                            margin: 15px 0;
                             padding: 20px;
+                        }
+                        
+                        .button-container {
+                            display: flex;
+                            gap: 20px;
+                            justify-content: center;
+                            margin: 30px 0;
+                        }
+                        
+                        .analysis-button {
+                            padding: 15px 30px;
+                            border: none;
                             border-radius: 10px;
-                            backdrop-filter: blur(10px);
-                            border: 1px solid rgba(255, 255, 255, 0.1);
-                            transition: transform 0.3s ease, box-shadow 0.3s ease;
+                            font-size: 1.2em;
+                            cursor: pointer;
+                            transition: transform 0.3s, box-shadow 0.3s;
                         }
                         
-                        li:hover {
-                            transform: translateY(-5px);
-                            box-shadow: 0 5px 15px rgba(0, 255, 149, 0.2);
+                        .ted-button {
+                            background: #AFC01C;
+                            color: white;
                         }
                         
-                        a {
+                        .stephen-button {
+                            background: #FF4D4D;
+                            color: white;
+                        }
+                        
+                        .analysis-button:hover {
+                            transform: translateY(-3px);
+                            box-shadow: 0 5px 15px rgba(0,255,149,0.3);
+                        }
+                        
+                        .stories-list {
+                            list-style: none;
+                            margin: 20px 0;
+                        }
+                        
+                        .stories-list li {
+                            background: rgba(255,255,255,0.1);
+                            margin: 10px 0;
+                            padding: 15px;
+                            border-radius: 8px;
+                        }
+                        
+                        .stories-list a {
                             color: #00ff95;
                             text-decoration: none;
-                            font-size: 1.1em;
                         }
                         
-                        a:hover {
+                        .stories-list a:hover {
                             text-decoration: underline;
-                            color: #00ffaa;
                         }
                         
-                        footer {
-                            background: rgba(0, 0, 0, 0.5);
-                            color: #fff;
-                            text-align: center;
-                            padding: 15px;
-                            position: fixed;
-                            bottom: 0;
-                            left: 0;
-                            width: 100%;
-                            backdrop-filter: blur(5px);
+                        .ai-analysis {
+                            background: rgba(255,255,255,0.1);
+                            padding: 20px;
+                            border-radius: 10px;
+                            margin-top: 30px;
+                            white-space: pre-wrap;
+                            display: ${aiContent ? 'block' : 'none'};
                         }
                     </style>
                 </head>
                 <body>
                     <div class="container">
-                        <h1>🤖 Top 10 Hacker News Posts AI Analysis</h1>
-                        <ul>
+                        <h1>🤖 Top 10 Hacker News Stories</h1>
+                        <p>This is a Cloudflare Worker that emails me the top 10 Hacker News stories and an analysis/summary of them using Cloudflare Email, Workers AI, AI Gateway, and Browser Rendering. On this page, you can select a tone to analyze the stories:</p>
+
+                        <ul class="stories-list">
                             ${topStories.map((story: any) => `
                                 <li>
                                     <a href="${story.link}" target="_blank">${story.title}</a>
                                 </li>
                             `).join('')}
                         </ul>
+                        <div class="button-container">
+                            <button onclick="window.location.href='?tone=tedlasso'" class="analysis-button ted-button">
+                                ⚽ Ted Lasso Analysis
+                            </button>
+                            <button onclick="window.location.href='?tone=stephena'" class="analysis-button stephen-button">
+                                🎤 Stephen A. Smith Analysis
+                            </button>
+                        </div>
+
+                        ${aiContent ? `
+                            <div class="ai-analysis">
+                                <h2>🎭 ${tone === 'tedlasso' ? 'Ted Lasso' : 'Stephen A. Smith'} Analysis</h2>
+                                <div>${aiContent.split('\n').map(line => `<p>${line}</p>`).join('')}</div>
+                            </div>
+                        ` : ''}
                     </div>
-                    <footer>
-                        Powered by <a href="https://developers.cloudflare.com/workers-ai/models/">Cloudflare Workers AI</a>, <a href="https://developers.cloudflare.com/browser-rendering/">Browser Rendering</a>, <a href="https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/">Emails</a> | GitHub -> <a href="https://github.com/elizabethsiegle/hackernews-top10-workersai-browserrendering-email">code👩🏻‍💻here</a>
-                    </footer>
                 </body>
             </html>
         `;
 
         return c.html(resultHtml);
     } catch (error) {
+        console.error('Scraping Error:', error);
         return c.text(`Error scraping Hacker News: ${error}`, 500);
     }
 });
@@ -261,7 +333,7 @@ export default {
         const stories = await getTopStories(env);
         
         const msg = createMimeMessage();
-        msg.setSender({ name: "HN Digest", addr: "sender@example.com" });
+        msg.setSender({ name: "HN Digest", addr: "me@lizziesiegle.xyz" });
         msg.setRecipient("lizzie@cloudflare.com");
         msg.setSubject("Top 10 Hacker News Stories");
         
@@ -272,24 +344,38 @@ export default {
 			{ role: "system", content: "You are a friendly assistant" },
 			{
 				role: "user",
-				content: "Compose an email including the top 10 Hacker News stories. Here are the stories: " + emailContent,
+				content: "Compose an email body explaining and analyzing the top 10 Hacker News stories. Do not have a preamble or closing. Here are the stories: " + emailContent,
 			},
 		];
-		const emailResponse = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages });
+		const emailResponse = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", 
+            {
+                messages,
+                max_tokens: 2048,
+                temperature: 0.5,
+            },
+            {
+                gateway: {
+                    id: "hn-browser-email",
+                    skipCache: false,
+                    cacheTtl: 3360,
+                },
+            }
+        );
 		  
         msg.addMessage({
             contentType: 'text/plain',
-            data: `${emailResponse.content}`
+            data: emailResponse.response || emailResponse.text || emailResponse.content || emailContent
         });
 
         const message = new EmailMessage(
-            "sender@example.com",
-            "recipient@example.com",
+            "me@lizziesiegle.xyz",
+            "lizzie@cloudflare.com",
             msg.asRaw()
         );
 
         try {
             await env.SEB.send(message);
+            console.log("Email sent successfully");
         } catch (e: any) {
             console.error("Failed to send email:", e.message);
         }

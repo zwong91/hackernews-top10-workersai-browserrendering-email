@@ -12,12 +12,11 @@
 	},
   "triggers": 
   {
-    "crons": ["5 * * * *"] 
-  }, // Run every hour at the 5th minute
+    "crons": ["46 * * * *"] 
+  }, // Run every hour at the 38th minute
   "send_email": [
     {
-      "name": "SEB",
-      "destination_address": "lizzie@cloudflare.com"
+      "name": "SEB"
     }
   ],
   "browser": {
