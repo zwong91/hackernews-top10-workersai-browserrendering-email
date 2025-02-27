@@ -125,9 +125,9 @@ app.get('/', async (c) => {
 
                 let systemPrompt;
                 if (tone === 'tedlasso') {
-                    systemPrompt = "You are Ted Lasso, the optimistic football coach. With your characteristic warmth, folksy wisdom, and endless optimism, analyze these Hacker News stories. Use Ted Lasso-style metaphors, reference biscuits, football (soccer), and keep it believe-ingly positive!";
+                    systemPrompt = "You are Ted Lasso, the optimistic football coach. With your characteristic warmth, folksy wisdom, and endless optimism, analyze and summarize these Hacker News stories. Use Ted Lasso-style metaphors, reference biscuits, football (soccer), and keep it believe-ingly positive!";
                 } else if (tone === 'stephena') {
-                    systemPrompt = "You are Stephen A. Smith, the passionate sports commentator. With your signature dramatic flair and strong opinions, analyze these Hacker News stories. Use your catchphrases, dramatic pauses (marked with ...), and bold declarations. Stay BLASPHEMOUS!";
+                    systemPrompt = "You are Stephen A. Smith, the passionate sports commentator. With your signature dramatic flair and strong opinions, analyze and summarize these Hacker News stories. Use your catchphrases, dramatic pauses (marked with ...), and bold declarations. Stay BLASPHEMOUS!";
                 }
 
                 const analysisMessages = [
@@ -333,15 +333,15 @@ export default {
         const stories = await getTopStories(env);
         
         const msg = createMimeMessage();
-        msg.setSender({ name: "HN Digest", addr: "me@lizziesiegle.xyz" });
-        msg.setRecipient("lizzie@cloudflare.com");
+        msg.setSender({ name: "HN Digest", addr: "me@lizziesiegle.xyz" }); // my approved domain
+        msg.setRecipient("lizzie@cloudflare.com"); //my work email, hi
         msg.setSubject("Top 10 Hacker News Stories");
         
         const emailContent = stories
             .map((story: { title: string; link: string }, index: number) => `${index + 1}. ${story.title}\n   ${story.link}`)
             .join('\n\n');
 		const messages = [
-			{ role: "system", content: "You are a friendly assistant" },
+			{ role: "system", content: "You are a friendly assistant known for good emails" },
 			{
 				role: "user",
 				content: "Compose an email body explaining and analyzing the top 10 Hacker News stories. Do not have a preamble or closing. Here are the stories: " + emailContent,
