@@ -9,7 +9,32 @@
 	"compatibility_date": "2025-02-24",
 	"observability": {
 		"enabled": true
-	}
+	},
+  "triggers": 
+  {
+    "crons": ["5 * * * *"] 
+  }, // Run every hour at the 5th minute
+  "send_email": [
+    {
+      "name": "SEB",
+      "destination_address": "lizzie@cloudflare.com"
+    }
+  ],
+  "browser": {
+    "binding": "MYBROWSER"
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BROWSERDO",
+        "class_name": "BrowserDo"
+      }
+    ]
+  },
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
