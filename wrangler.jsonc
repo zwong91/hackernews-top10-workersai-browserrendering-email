@@ -13,16 +13,16 @@
   "triggers": 
   {
     "crons": ["46 * * * *"] 
-  }, // Run every hour at the 38th minute
-  "send_email": [
+  }, // Edit how often you wish the email to send. This runs every hour at the 46th minute
+  "send_email": [ //email binding to send the email
     {
       "name": "SEB"
     }
   ],
-  "browser": {
+  "browser": { // browser rendering binding to scrape Hacker News
     "binding": "MYBROWSER"
   },
-  "ai": {
+  "ai": { // AI binding to analyze and summarize the stories with Workers AI
     "binding": "AI"
   },
   "compatibility_flags": ["nodejs_compat"],
@@ -42,6 +42,7 @@
       ]
     }
   ]
+  
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
