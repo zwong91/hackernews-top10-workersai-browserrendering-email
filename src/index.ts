@@ -135,7 +135,7 @@ app.get('/', async (c) => {
                     { role: "user", content: "Analyze these top Hacker News stories and provide a brief, engaging summary:\n\n" + storiesForAnalysis }
                 ];
 
-                const analysisResponse = await c.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", 
+                const analysisResponse = await c.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast",
                     {
                         messages: analysisMessages,
                         max_tokens: 2048,
@@ -150,9 +150,9 @@ app.get('/', async (c) => {
                     }
                 );
 
-                aiContent = (analysisResponse?.text || 
-                           analysisResponse?.response || 
-                           analysisResponse?.content || 
+                aiContent = (analysisResponse?.text ||
+                           analysisResponse?.response ||
+                           analysisResponse?.content ||
                            'Analysis failed to generate.')
                            .toString()
                            .replace(/&/g, '&amp;')
@@ -174,14 +174,14 @@ app.get('/', async (c) => {
                     <title>HN AI Analysis</title>
                     <style>
                         @import url('https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap');
-                        
+
                         * {
                             margin: 0;
                             padding: 0;
                             box-sizing: border-box;
                             font-family: 'Comic Neue', cursive;
                         }
-                        
+
                         body {
                             min-height: 100vh;
                             display: flex;
@@ -190,20 +190,20 @@ app.get('/', async (c) => {
                             color: #fff;
                             padding: 20px;
                         }
-                        
+
                         .container {
                             max-width: 800px;
                             margin: 0 auto;
                             padding: 20px;
                         }
-                        
+
                         .button-container {
                             display: flex;
                             gap: 20px;
                             justify-content: center;
                             margin: 30px 0;
                         }
-                        
+
                         .analysis-button {
                             padding: 15px 30px;
                             border: none;
@@ -212,43 +212,43 @@ app.get('/', async (c) => {
                             cursor: pointer;
                             transition: transform 0.3s, box-shadow 0.3s;
                         }
-                        
+
                         .ted-button {
                             background: #AFC01C;
                             color: white;
                         }
-                        
+
                         .stephen-button {
                             background: #FF4D4D;
                             color: white;
                         }
-                        
+
                         .analysis-button:hover {
                             transform: translateY(-3px);
                             box-shadow: 0 5px 15px rgba(0,255,149,0.3);
                         }
-                        
+
                         .stories-list {
                             list-style: none;
                             margin: 20px 0;
                         }
-                        
+
                         .stories-list li {
                             background: rgba(255,255,255,0.1);
                             margin: 10px 0;
                             padding: 15px;
                             border-radius: 8px;
                         }
-                        
+
                         .stories-list a {
                             color: #00ff95;
                             text-decoration: none;
                         }
-                        
+
                         .stories-list a:hover {
                             text-decoration: underline;
                         }
-                        
+
                         .ai-analysis {
                             background: rgba(255,255,255,0.1);
                             padding: 20px;
@@ -345,12 +345,12 @@ export default {
     ...app,
     async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
         const stories = await getTopStories(env);
-        
+
         const msg = createMimeMessage();
-        msg.setSender({ name: "HN Digest", addr: "me@lizziesiegle.xyz" }); // my approved domain
-        msg.setRecipient("lizzie@cloudflare.com"); //my work email, hi
+        msg.setSender({ name: "HN Digest", addr: "mail@jongun2038.win" }); // 使用 Cloudflare 邮件路由域名
+        msg.setRecipient("yzbingchuan@gmail.com");
         msg.setSubject("Top 10 Hacker News Stories");
-        
+
         const emailContent = stories
             .map((story: { title: string; link: string }, index: number) => `${index + 1}. ${story.title}\n   ${story.link}`)
             .join('\n\n');
@@ -361,7 +361,7 @@ export default {
 				content: "Compose an email body explaining and analyzing the top 10 Hacker News stories. Do not have a preamble or closing. Here are the stories: " + emailContent,
 			},
 		];
-		const emailResponse = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", 
+		const emailResponse = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast",
             {
                 messages,
                 max_tokens: 2048,
@@ -375,7 +375,7 @@ export default {
                 },
             }
         );
-		  
+
         msg.addMessage({
             contentType: 'text/plain',
             data: emailResponse.response || emailResponse.text || emailResponse.content || emailContent
