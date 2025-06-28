@@ -1,0 +1,35 @@
+# 有关如何配置 Wrangler 的更多详细信息，请参阅：
+# https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "hacker-news-email-worker"
+main = "src/index.ts"
+compatibility_date = "2025-06-28"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["0 * * * *"] # 每小时运行
+
+[[send_email]]
+name = "SEB"
+
+[ai]
+binding = "AI"
+
+[browser]
+binding = "MYBROWSER"
+
+[durable_objects]
+bindings = [
+  { name = "BROWSERDO", class_name = "BrowserDo" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["BrowserDo"]
+
+[observability]
+enabled = true
+
+# Smart Placement
+# [placement]
+# mode = "smart"
