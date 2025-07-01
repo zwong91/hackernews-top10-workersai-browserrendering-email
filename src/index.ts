@@ -135,7 +135,7 @@ app.get('/', async (c) => {
                     { role: "user", content: "Analyze these top Hacker News stories and provide a brief, engaging summary:\n\n" + storiesForAnalysis }
                 ];
 
-                const analysisResponse = await c.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+                const analysisResponse = await c.env.AI.run("@cf/mistralai/mistral-small-3.1-24b-instruct",
                     {
                         messages: analysisMessages,
                         max_tokens: 2048,
@@ -361,7 +361,7 @@ export default {
 				content: "Compose an email body explaining and analyzing the top 10 Hacker News stories. Do not have a preamble or closing. Here are the stories: " + emailContent,
 			},
 		];
-		const emailResponse = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+		const emailResponse = await env.AI.run("@cf/mistralai/mistral-small-3.1-24b-instruct",
             {
                 messages,
                 max_tokens: 2048,
@@ -382,8 +382,8 @@ export default {
         });
 
         const message = new EmailMessage(
-            "me@lizziesiegle.xyz",
-            "lizzie@cloudflare.com",
+            "mail@jongun2038.win",
+            "yzbingchuan@gmail.com",
             msg.asRaw()
         );
 
